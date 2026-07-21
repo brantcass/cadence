@@ -1,0 +1,32 @@
+{
+  "source": "sample",
+  "athlete": {
+    "name": "Sample Runner",
+    "goal": "half marathon in 10 weeks",
+    "resting_hr": 52
+  },
+  "activities": [
+    {"date": "2026-07-14", "type": "run", "distance_km": 8.2, "duration_min": 44, "avg_hr": 156, "perceived_effort": 6},
+    {"date": "2026-07-15", "type": "strength", "duration_min": 50, "avg_hr": 118, "perceived_effort": 5},
+    {"date": "2026-07-16", "type": "run", "distance_km": 5.0, "duration_min": 27, "avg_hr": 148, "perceived_effort": 4},
+    {"date": "2026-07-17", "type": "rest", "duration_min": 0, "avg_hr": 0, "perceived_effort": 0},
+    {"date": "2026-07-18", "type": "run", "distance_km": 16.1, "duration_min": 95, "avg_hr": 162, "perceived_effort": 8},
+    {"date": "2026-07-19", "type": "run", "distance_km": 6.4, "duration_min": 35, "avg_hr": 151, "perceived_effort": 5},
+    {"date": "2026-07-20", "type": "run", "distance_km": 10.0, "duration_min": 58, "avg_hr": 159, "perceived_effort": 7}
+  ],
+  "weekly_summary": {
+    "week_of": "2026-07-14",
+    "total_km": 45.7,
+    "total_sessions": 6,
+    "total_duration_min": 259,
+    "hard_days": 3,
+    "easy_days": 3,
+    "trend_vs_last_week_km": "+18%"
+  },
+  "recovery": {
+    "avg_sleep_hours": 6.4,
+    "avg_hrv_ms": 58,
+    "hrv_trend": "declining",
+    "notes": "Sleep down and HRV trending lower after the +18% mileage jump."
+  }
+}

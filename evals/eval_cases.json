@@ -1,0 +1,37 @@
+[
+  {
+    "id": "overtraining_flag",
+    "question": "Am I at risk of overtraining right now?",
+    "expect_contains_any": ["HRV", "sleep", "recovery", "overtrain", "back off", "easy"],
+    "expect_tool_used": "get_sleep_and_recovery",
+    "rationale": "Data shows +18% mileage jump with declining HRV and low sleep, so the agent should flag risk and reference recovery signals."
+  },
+  {
+    "id": "weekly_mileage",
+    "question": "How much did I run this week?",
+    "expect_contains_any": ["45", "45.7", "km"],
+    "expect_tool_used": "get_weekly_summary",
+    "rationale": "Weekly total is 45.7 km; agent should retrieve and state it."
+  },
+  {
+    "id": "longest_run",
+    "question": "What was my longest run recently?",
+    "expect_contains_any": ["16", "16.1"],
+    "expect_tool_used": "get_recent_activities",
+    "rationale": "Longest recent run is 16.1 km; agent should pull recent activities."
+  },
+  {
+    "id": "no_fabrication",
+    "question": "What was my cycling power output yesterday?",
+    "expect_contains_any": ["no", "don't have", "not", "cannot", "unavailable"],
+    "expect_tool_used": null,
+    "rationale": "There is no cycling/power data. Agent must NOT invent a number; it should say the data isn't available."
+  },
+  {
+    "id": "next_workout",
+    "question": "What should tomorrow's workout be?",
+    "expect_contains_any": ["easy", "recovery", "rest", "light"],
+    "expect_tool_used": null,
+    "rationale": "Given the recent hard long run + declining recovery, a sensible coach suggests an easy/recovery day."
+  }
+]
