@@ -2,7 +2,7 @@
 Swappable LLM provider layer.
 
 The whole app talks to ONE interface (`chat`), so the underlying model can be
-switched with a single env var. Defaults to Claude (matches the team's stack);
+switched with a single env var. Defaults to Claude;
 Kimi K2 is supported because Moonshot exposes an Anthropic-compatible endpoint,
 so the same SDK works with just a different base_url + key.
 
@@ -15,10 +15,10 @@ Set in .env:
 import os
 from anthropic import Anthropic
 
-# Which provider is active. Claude is the default.
+# Which provider is active, Claude is the default.
 PROVIDER = os.getenv("LLM_PROVIDER", "claude").lower()
 
-# Per-provider config. Kimi reuses the Anthropic SDK via its compatible endpoint.
+# Per-provider config 
 _PROVIDERS = {
     "claude": {
         "api_key_env": "ANTHROPIC_API_KEY",

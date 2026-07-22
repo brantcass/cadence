@@ -61,8 +61,19 @@ def get_training_data():
 # ---- Convenience accessors the agent's tools call ----
 
 def get_recent_activities(limit: int = 7):
-    data = get_training_data()
-    return data.get("activities", [])[:limit]
+    """The `limit` MOST RECENT sessions, oldest-first.
+
+    Sort explicitly rather than trusting the source's ordering: the sample file
+    is chronological ascending, but the live Garmin API returns newest-first.
+    Slicing the raw list would silently return the wrong end for one of them.
+    """
+    activities = sorted(get_all_activities(), key=lambda a: a.get("date", ""))
+    return activities[-limit:] if limit else activities
+
+
+def get_all_activities():
+    """Full activity history. Derived metrics need the whole series, not a slice."""
+    return get_training_data().get("activities", [])
 
 
 def get_weekly_summary():
@@ -73,3 +84,15 @@ def get_weekly_summary():
 def get_sleep_and_recovery():
     data = get_training_data()
     return data.get("recovery", {})
+
+
+def get_daily_recovery():
+    """Day-by-day sleep/HRV/resting-HR series (for trend charts and analysis)."""
+    data = get_training_data()
+    return data.get("daily_recovery", [])
+
+
+def get_athlete():
+    """Athlete profile: goal, resting/max HR, threshold pace."""
+    data = get_training_data()
+    return data.get("athlete", {})

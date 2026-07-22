@@ -11,8 +11,6 @@ provider (Claude / Kimi K2), an agent loop with tool use, and an eval harness.
 - **AI coach agent** — chats with the athlete, calling tools to retrieve their
   recent activities, weekly load, and recovery data before answering.
 - **Dashboard** — charts of recent distance and heart-rate trends.
-- **Swappable model** — Claude by default; switch to Kimi K2 with one env var
-  (Kimi is used via its Anthropic-compatible endpoint).
 - **Evals** — a test suite that checks the agent's behavior and tool use, the
   way you'd unit-test classical code.
 - **No-break demos** — reads live Garmin data when available, sample data

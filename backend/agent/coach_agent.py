@@ -1,19 +1,18 @@
 """
 The coach agent loop.
 
-This is the core "agent" piece: the model is given tools, and we run a loop that
+The model is given tools, and it runs a loop that
 lets it call tools, feeds results back, and repeats until it produces a final
 answer. This is the pattern the job description calls an "agent loop."
 
-The agent is scoped to ONE athlete (their data is what the tools read), which is
-deliberately parallel to a per-student tutoring agent.
+The agent is scoped to ONE person (their data is what the tools read)
 """
 
 import json
 from models import llm_provider
 from agent import tools
 
-SYSTEM_PROMPT = """You are Cadence, a personal endurance coach for ONE athlete.
+SYSTEM_PROMPT = """You are Cadence, a personal endurance coach for ONE person.
 
 You have tools to read the athlete's recent training, weekly load, and recovery
 data. Use them before making claims — don't guess at numbers you can retrieve.

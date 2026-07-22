@@ -7,6 +7,12 @@ export async function fetchTrainingData() {
   return res.json();
 }
 
+export async function fetchMetrics() {
+  const res = await fetch(`${BASE}/api/metrics`);
+  if (!res.ok) throw new Error(`metrics failed: ${res.status}`);
+  return res.json();
+}
+
 export async function askCoach(message, history = []) {
   const res = await fetch(`${BASE}/api/coach`, {
     method: "POST",
