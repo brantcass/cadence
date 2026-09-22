@@ -1,0 +1,342 @@
+{
+  "source": "Push, Pull, Legs.xlsx (6-day PPL split)",
+  "exercises": [
+    {
+      "id": 1,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "Warm up squat",
+      "scheme": "4 sets total of 22 reps. 1st set of 10,2nd set 5 reps, 3rd set 4 reps, 4th set 3 reps while moving up in weight.",
+      "pct_1rm": null,
+      "is_compound": true
+    },
+    {
+      "id": 2,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "Squat working set",
+      "scheme": "5 sets 5 reps of 75% of 1RM",
+      "pct_1rm": 75,
+      "is_compound": true
+    },
+    {
+      "id": 3,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "Romanian DL",
+      "scheme": "3 sets 10 reps, dont go too heavy",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 4,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "Leg Press",
+      "scheme": "3 x 15",
+      "pct_1rm": null,
+      "is_compound": true
+    },
+    {
+      "id": 5,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "Leg extension",
+      "scheme": "3 x 10 - 12",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 6,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "Seated leg curl",
+      "scheme": "3 x 10 - 12, last set 10 reps to failure then half weight go til failure.",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 7,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "Calf raises",
+      "scheme": "3 x 10 - 12, after each set do more reps for left leg",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 8,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "decline crunches",
+      "scheme": "2 x 10 - 12",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 9,
+      "day_label": "Legs 1 - Quad focused",
+      "name": "Long lever planks",
+      "scheme": "2 x 30 sec",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 10,
+      "day_label": "Push 1-chest delts triceps",
+      "name": "Bench press",
+      "scheme": "3 x 8 (72% of 1RM)",
+      "pct_1rm": 72,
+      "is_compound": true
+    },
+    {
+      "id": 11,
+      "day_label": "Push 1-chest delts triceps",
+      "name": "incline chest press",
+      "scheme": "3 x 12",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 12,
+      "day_label": "Push 1-chest delts triceps",
+      "name": "Dip",
+      "scheme": "3 x 12 - 15",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 13,
+      "day_label": "Push 1-chest delts triceps",
+      "name": "Skull crusher",
+      "scheme": "3 x 8 - 10",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 14,
+      "day_label": "Push 1-chest delts triceps",
+      "name": "Cabel cross over",
+      "scheme": "3 x 12",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 15,
+      "day_label": "Push 1-chest delts triceps",
+      "name": "Tricep pull down",
+      "scheme": "3 x 10 - 12",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 16,
+      "day_label": "Push 1-chest delts triceps",
+      "name": "Cabel shoulder pull",
+      "scheme": "3 x 12",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 17,
+      "day_label": "Pull 1- Lat focused",
+      "name": "Weighted pull up",
+      "scheme": "3 x 6, can do body weight or assisted",
+      "pct_1rm": null,
+      "is_compound": true
+    },
+    {
+      "id": 18,
+      "day_label": "Pull 1- Lat focused",
+      "name": "Seated cabel row",
+      "scheme": "3 x 10 - 12, close grip",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 19,
+      "day_label": "Pull 1- Lat focused",
+      "name": "machine pull over",
+      "scheme": "3 x 15",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 20,
+      "day_label": "Pull 1- Lat focused",
+      "name": "Hammer cheat curl",
+      "scheme": "3 x 8 - 10",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 21,
+      "day_label": "Pull 1- Lat focused",
+      "name": "Incline dumbell curl",
+      "scheme": "2 x 12 - 15, rotate dumbell as you curl",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 22,
+      "day_label": "Pull 1- Lat focused",
+      "name": "Leg Lifts",
+      "scheme": "",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 23,
+      "day_label": "Legs 2",
+      "name": "Dead lift",
+      "scheme": "3 x 3, (80 - 85% of 1RM)",
+      "pct_1rm": 85,
+      "is_compound": true
+    },
+    {
+      "id": 24,
+      "day_label": "Legs 2",
+      "name": "Hack sqaut",
+      "scheme": "3 x 10 - 12, goodbye",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 25,
+      "day_label": "Legs 2",
+      "name": "Roman chairs",
+      "scheme": "2 x 15",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 26,
+      "day_label": "Legs 2",
+      "name": "Hip thrusts(maybe)",
+      "scheme": "2 x 15",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 27,
+      "day_label": "Legs 2",
+      "name": "Single leg calf raise",
+      "scheme": "3 x 8 - 10",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 28,
+      "day_label": "Legs 2",
+      "name": "Weighted L-sit hold",
+      "scheme": "3 sets how ever long you can hold it",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 29,
+      "day_label": "Push 2- delt focused",
+      "name": "Overhead press",
+      "scheme": "4 x 4(80% of 1RM)",
+      "pct_1rm": 80,
+      "is_compound": true
+    },
+    {
+      "id": 30,
+      "day_label": "Push 2- delt focused",
+      "name": "Close grip bench press",
+      "scheme": "3 x 10",
+      "pct_1rm": null,
+      "is_compound": true
+    },
+    {
+      "id": 31,
+      "day_label": "Push 2- delt focused",
+      "name": "Cabel cross over(chest)",
+      "scheme": "3 x 10 - 12, half weight on last set til failure",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 32,
+      "day_label": "Push 2- delt focused",
+      "name": "some other shoulder workout",
+      "scheme": "3 x 10 - 12",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 33,
+      "day_label": "Push 2- delt focused",
+      "name": "Lateral raise 21's",
+      "scheme": "3 x 7/7/7",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 34,
+      "day_label": "Push 2- delt focused",
+      "name": "Abs",
+      "scheme": "",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 35,
+      "day_label": "Pull 2- Mid back",
+      "name": "Omni grip lat pulldown",
+      "scheme": "3 x 10 - 12, neutral grip",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 36,
+      "day_label": "Pull 2- Mid back",
+      "name": "Machine chest row",
+      "scheme": "3 x 10 - 12",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 37,
+      "day_label": "Pull 2- Mid back",
+      "name": "Rope face pulls",
+      "scheme": "3 x 15 - 20",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 38,
+      "day_label": "Pull 2- Mid back",
+      "name": "dumbbell shrug(optional)",
+      "scheme": "3 x 15 - 20 (for traps)",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 39,
+      "day_label": "Pull 2- Mid back",
+      "name": "Reverse pec deck",
+      "scheme": "2 x 15,  then 3rd set to failure",
+      "pct_1rm": null,
+      "is_compound": false
+    },
+    {
+      "id": 40,
+      "day_label": "Pull 2- Mid back",
+      "name": "Pronated/ Supinated curl",
+      "scheme": "3 x 10 / 10",
+      "pct_1rm": null,
+      "is_compound": false
+    }
+  ],
+  "condensed_sessions": {
+    "Strength A — legs + push": [
+      2,
+      3,
+      29,
+      4,
+      9
+    ],
+    "Strength B — full body + core": [
+      23,
+      10,
+      17,
+      27,
+      28
+    ]
+  },
+  "progression_note": "Progress compound lifts weekly by % of 1RM (base/build); maintain through peak; back off in the taper."
+}

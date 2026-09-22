@@ -9,6 +9,9 @@ venv/
 .env
 *.local
 
+# Local SQLite database (user's working weights + workout log; not shipped)
+*.db
+
 # Node
 node_modules/
 dist/
