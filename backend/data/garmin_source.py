@@ -173,6 +173,18 @@ def get_daily_recovery():
 
 
 def get_athlete():
-    """Athlete profile: goal, resting/max HR, threshold pace."""
+    """Athlete profile: goal, resting/max HR, threshold pace.
+
+    If the profile has no threshold pace (the live Garmin path can't supply one),
+    estimate it from the run history so pace zones and the training plan still
+    work. An explicit value — sample data or GARMIN_THRESHOLD_PACE — always wins.
+    """
     data = get_training_data()
-    return data.get("athlete", {})
+    athlete = dict(data.get("athlete", {}))   # copy: don't mutate the cached payload
+    if not athlete.get("threshold_pace_min_per_km"):
+        from analytics import training_metrics as metrics
+        estimated = metrics.estimate_threshold_pace(data.get("activities", []))
+        if estimated is not None:
+            athlete["threshold_pace_min_per_km"] = estimated
+            athlete["threshold_pace_estimated"] = True   # flag it as a guess, not a test
+    return athlete

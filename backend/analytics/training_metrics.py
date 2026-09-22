@@ -128,6 +128,27 @@ def pace_zones(athlete):
     }
 
 
+def estimate_threshold_pace(activities, min_distance_km: float = 6.0):
+    """Estimate threshold pace (min/km) from training history.
+
+    Live Garmin data has no threshold-pace field, and without one we can't build
+    pace zones or ground the training plan's target paces. So when the athlete
+    profile doesn't supply one, we approximate it from what they've actually run.
+
+    Heuristic: the fastest average pace they've sustained over a reasonably long
+    run (>= `min_distance_km`). Nobody runs 6 km+ meaningfully faster than their
+    threshold, so the fastest such effort is a safe, slightly-conservative proxy.
+    It's deliberately rough — a real lactate/field test or `GARMIN_THRESHOLD_PACE`
+    overrides it. Returns None if there aren't enough runs to guess from.
+    """
+    runs = [a for a in activities if _is_run(a) and a.get("distance_km", 0) >= min_distance_km]
+    if not runs:                       # fall back to any run if none are long enough
+        runs = [a for a in activities if _is_run(a)]
+    if not runs:
+        return None
+    return round(min(pace_min_per_km(a) for a in runs), 2)
+
+
 def classify_zone(pace, threshold) -> str | None:
     if pace is None or not threshold:
         return None
