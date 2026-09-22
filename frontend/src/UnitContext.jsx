@@ -6,10 +6,13 @@
 // metric data everywhere and only convert at the display edge (see units.js) —
 // this context just tracks WHICH edge we're rendering.
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { METRIC, IMPERIAL } from "./units.js";
 
-const STORAGE_KEY = "units";
+// v2 key: the old "units" key was auto-written on first load, which would pin
+// early visitors to whatever the previous default was. Bumping the key lets the
+// current default (imperial) apply until the user explicitly chooses.
+const STORAGE_KEY = "cadence_units_v2";
 
 // The context object itself. The default (null) is only used if a component
 // calls useUnits() while NOT wrapped in a <UnitProvider> — we turn that into a
@@ -20,20 +23,21 @@ export function UnitProvider({ children }) {
   // Lazy initializer: passing a FUNCTION to useState makes React call it only
   // once, on the first render, instead of touching localStorage on every render.
   const [system, setSystem] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    // Only trust a value we recognize; anything else falls back to metric.
-    return saved === IMPERIAL ? IMPERIAL : METRIC;
+    // Default to imperial (miles/pounds) — the athlete thinks in miles. Only a
+    // previously-saved explicit "metric" choice overrides that default.
+    let saved = null;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch { /* private mode */ }
+    return saved === METRIC ? METRIC : IMPERIAL;
   });
 
-  // Persist the choice whenever it changes, so a reload restores it.
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, system);
-  }, [system]);
-
-  // Flip between the two systems. Using the updater form (prev => ...) means we
-  // never read a stale `system` value.
+  // Persist ONLY on an explicit toggle (not on mount), so the default applies to
+  // everyone who hasn't deliberately chosen the other system.
   const toggle = () => {
-    setSystem((prev) => (prev === METRIC ? IMPERIAL : METRIC));
+    setSystem((prev) => {
+      const next = prev === METRIC ? IMPERIAL : METRIC;
+      try { localStorage.setItem(STORAGE_KEY, next); } catch { /* private mode */ }
+      return next;
+    });
   };
 
   return (
