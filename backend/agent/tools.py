@@ -20,6 +20,8 @@ that's what drives the model to pick the right retrieval path.
 from analytics import training_metrics as metrics
 from analytics import units
 from data import garmin_source
+from data import db
+import plan_service
 
 # ---- Schemas the model sees (Anthropic tool-use format) ----
 
@@ -115,6 +117,44 @@ TOOL_SCHEMAS = [
                        "Pair it with get_sleep_and_recovery for a full readiness read.",
         "input_schema": {"type": "object", "properties": {}},
     },
+    {
+        "name": "get_plan_overview",
+        "description": "Get the big-picture structure of the athlete's marathon "
+                       "training plan: race date and distance, weeks remaining, a "
+                       "current-fitness snapshot (threshold pace, weekly volume), the "
+                       "phase breakdown (Base / Build / Peak / Taper), the target "
+                       "training paces, and a one-line summary of every week. Call "
+                       "this for questions about the plan as a whole: how long until "
+                       "the race, what phase they're in, how the plan progresses, or "
+                       "when they peak and taper.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_training_plan",
+        "description": "Get the detailed day-by-day workouts for the upcoming week(s) "
+                       "of the plan — every session with its type, target distance, "
+                       "target pace, and instructions. Call this when asked what to do "
+                       "today, this week, or next week; what tomorrow's run is; or for "
+                       "the specifics of any upcoming session.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "weeks_ahead": {
+                    "type": "integer",
+                    "description": "How many upcoming weeks of detail to return (default 2).",
+                }
+            },
+        },
+    },
+    {
+        "name": "get_strength_workout",
+        "description": "Get the athlete's two condensed strength sessions (the "
+                       "marathon-build version of their Push/Pull/Legs plan): the "
+                       "exercises, sets/reps schemes, %1RM targets, and current working "
+                       "weights. Call this when asked what lifts to do, for strength-day "
+                       "details, how much weight to use, or about their gym workouts.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
 ]
 
 # ---- The actual functions, keyed by tool name ----
@@ -156,6 +196,23 @@ def _get_training_load():
     return metrics.training_load(garmin_source.get_all_activities())
 
 
+def _get_plan_overview():
+    return plan_service.plan_overview()
+
+
+def _get_training_plan(weeks_ahead: int = 2):
+    return plan_service.upcoming(count=weeks_ahead)
+
+
+def _get_strength_workout():
+    db.init_db()   # idempotent; makes the tool safe to call before app startup ran
+    catalog = db.load_catalog()
+    return {
+        "sessions": db.condensed_sessions(),
+        "progression_note": catalog.get("progression_note"),
+    }
+
+
 TOOL_FUNCTIONS = {
     "get_recent_activities": _get_recent_activities,
     "get_weekly_summary": _get_weekly_summary,
@@ -164,6 +221,9 @@ TOOL_FUNCTIONS = {
     "get_week_over_week_trends": _get_week_over_week_trends,
     "get_personal_records": _get_personal_records,
     "get_training_load": _get_training_load,
+    "get_plan_overview": _get_plan_overview,
+    "get_training_plan": _get_training_plan,
+    "get_strength_workout": _get_strength_workout,
 }
 
 
@@ -187,11 +247,57 @@ def _enrich_activities(activities, system):
     return out
 
 
+def _enrich_plan(result, system):
+    """Add unit-converted display strings throughout a plan result so an imperial
+    athlete gets miles, not kilometres. Metric values stay canonical."""
+    if not isinstance(result, dict):
+        return result
+
+    paces = result.get("paces")
+    if isinstance(paces, dict):
+        for v in paces.values():
+            if isinstance(v, dict) and v.get("min_per_km") is not None:
+                v["display"] = units.format_pace(v["min_per_km"], system)
+
+    # Detailed weeks (get_training_plan): convert every session's numbers.
+    for w in result.get("weeks", []) or []:
+        for s in w.get("sessions", []) or []:
+            if s.get("distance_km"):
+                s["distance_display"] = units.format_distance(s["distance_km"], system)
+            if s.get("target_pace_min_per_km"):
+                s["pace_display"] = units.format_pace(s["target_pace_min_per_km"], system)
+        if w.get("long_run_km"):
+            w["long_run_display"] = units.format_distance(w["long_run_km"], system)
+
+    # Week summaries (get_plan_overview).
+    for w in result.get("week_summaries", []) or []:
+        if w.get("long_run_km"):
+            w["long_run_display"] = units.format_distance(w["long_run_km"], system)
+        if w.get("target_run_km"):
+            w["weekly_distance_display"] = units.format_distance(w["target_run_km"], system)
+    return result
+
+
+def _enrich_strength(result, system):
+    """Add a `weight_display` (kg or lb) next to each working weight that's set."""
+    if not isinstance(result, dict):
+        return result
+    for exercises in result.get("sessions", {}).values():
+        for ex in exercises:
+            if ex.get("working_weight_kg") is not None:
+                ex["weight_display"] = units.format_weight(ex["working_weight_kg"], system)
+    return result
+
+
 def enrich_display(name, result, system):
     """Attach `*_display` fields (in the athlete's units) to results that carry
-    distances or paces. Central place to add more tools as we go."""
+    distances, paces, or weights. Central place to add more tools as we go."""
     if name == "get_recent_activities" and isinstance(result, list):
         return _enrich_activities(result, system)
+    if name in ("get_training_plan", "get_plan_overview"):
+        return _enrich_plan(result, system)
+    if name == "get_strength_workout":
+        return _enrich_strength(result, system)
     return result
 
 

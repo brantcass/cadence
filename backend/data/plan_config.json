@@ -1,0 +1,13 @@
+{
+  "race_type": "marathon",
+  "race_date": "2027-02-14",
+  "start_date": null,
+  "schedule": {
+    "long_run_day": 0,
+    "quality_day": 2,
+    "easy_day": 5,
+    "strength_a_day": 1,
+    "strength_b_day": 4,
+    "climb_day": 3
+  }
+}
