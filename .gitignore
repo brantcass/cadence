@@ -22,5 +22,6 @@ dist/
 .idea/
 .vscode/
 
-# Project context (kept local, not tracked)
+# Project context + local tooling (kept local, not tracked)
 CLAUDE.md
+.claude/

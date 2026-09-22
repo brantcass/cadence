@@ -15,7 +15,9 @@ export const IMPERIAL = "imperial";
 
 // ---- raw converters (number in, number out) ----
 export const kmToMi = (km) => km / KM_PER_MILE;
+export const miToKm = (mi) => mi * KM_PER_MILE;
 export const kgToLb = (kg) => kg / KG_PER_POUND;
+export const lbToKg = (lb) => lb * KG_PER_POUND;
 export const pacePerKmToPerMi = (minPerKm) => minPerKm * KM_PER_MILE;
 
 // ---- display formatters (canonical metric value in, string out) ----

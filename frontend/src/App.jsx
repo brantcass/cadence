@@ -1,46 +1,60 @@
-import { useEffect, useState } from "react";
-import { fetchTrainingData } from "./api.js";
+import { useState } from "react";
 import { useUnits } from "./UnitContext.jsx";
 import { unitLabel } from "./units.js";
 import Dashboard from "./components/Dashboard.jsx";
+import Plan from "./components/Plan.jsx";
+import Strength from "./components/Strength.jsx";
 import ChatPanel from "./components/ChatPanel.jsx";
+
+const TABS = [
+  { id: "plan", label: "Plan" },
+  { id: "dashboard", label: "Dashboard" },
+  { id: "strength", label: "Strength" },
+];
 
 export default function App() {
   const { system, toggle } = useUnits();
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchTrainingData().then(setData).catch((e) => setError(e.message));
-  }, []);
+  const [tab, setTab] = useState("plan");
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", maxWidth: 1100, margin: "0 auto", padding: 24 }}>
-      <header style={{ display: "flex", alignItems: "flex-start",
-                       justifyContent: "space-between", marginBottom: 24 }}>
+    <div className="app">
+      <header className="app-header">
         <div>
           <h1 style={{ margin: 0 }}>Cadence</h1>
-          <p style={{ color: "#666", marginTop: 4 }}>
+          <p className="muted" style={{ margin: "4px 0 0" }}>
             Your personal AI endurance coach
           </p>
         </div>
-        {/* One global units toggle. Flips the whole UI (dashboard + coach)
+        {/* One global units toggle — flips the whole UI (dashboard, plan, coach)
             between metric and imperial; the choice persists in localStorage. */}
-        <button
-          onClick={toggle}
-          title="Switch units"
-          style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #ccc",
-                   background: "#fff", cursor: "pointer", fontSize: 13 }}
-        >
+        <button className="btn" onClick={toggle} title="Switch units">
           Units: {unitLabel(system)}
         </button>
       </header>
 
-      {error && <p style={{ color: "crimson" }}>Error: {error} (is the backend running?)</p>}
+      <div className="cols">
+        <main>
+          <nav className="tabbar">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                className={`tab ${tab === t.id ? "active" : ""}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-        <Dashboard data={data} />
-        <ChatPanel />
+          {tab === "plan" && <Plan />}
+          {tab === "dashboard" && <Dashboard />}
+          {tab === "strength" && <Strength />}
+        </main>
+
+        {/* Coach stays visible beside every tab — it's the point of the app. */}
+        <aside>
+          <ChatPanel />
+        </aside>
       </div>
     </div>
   );

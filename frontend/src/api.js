@@ -13,6 +13,28 @@ export async function fetchMetrics() {
   return res.json();
 }
 
+export async function fetchPlan() {
+  const res = await fetch(`${BASE}/api/plan`);
+  if (!res.ok) throw new Error(`plan failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchStrength() {
+  const res = await fetch(`${BASE}/api/strength`);
+  if (!res.ok) throw new Error(`strength failed: ${res.status}`);
+  return res.json();
+}
+
+export async function updateStrengthWeight(exerciseId, weightKg) {
+  const res = await fetch(`${BASE}/api/strength/${exerciseId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ weight_kg: weightKg }),
+  });
+  if (!res.ok) throw new Error(`weight update failed: ${res.status}`);
+  return res.json();
+}
+
 export async function askCoach(message, history = [], unitSystem = "metric") {
   const res = await fetch(`${BASE}/api/coach`, {
     method: "POST",

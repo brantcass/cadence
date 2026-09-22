@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { askCoach } from "../api.js";
 import { useUnits } from "../UnitContext.jsx";
+import { colors } from "../theme.js";
+
+const EXAMPLES = [
+  "What's my workout today?",
+  "Am I ramping up too fast?",
+  "What phase am I in and when do I peak?",
+  "How much should I squat this week?",
+];
 
 // Chat panel: talk to the coach agent. Shows which tools it used, so you can
 // literally see the agent retrieving data — a nice thing to demo.
@@ -10,18 +18,15 @@ export default function ChatPanel() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function send() {
-    const q = input.trim();
+  async function send(text) {
+    const q = (text ?? input).trim();
     if (!q || loading) return;
     setInput("");
     setMessages((m) => [...m, { role: "user", text: q }]);
     setLoading(true);
     try {
       const res = await askCoach(q, [], system);
-      setMessages((m) => [
-        ...m,
-        { role: "coach", text: res.reply, tools: res.tool_calls },
-      ]);
+      setMessages((m) => [...m, { role: "coach", text: res.reply, tools: res.tool_calls }]);
     } catch (e) {
       setMessages((m) => [...m, { role: "coach", text: `Error: ${e.message}` }]);
     } finally {
@@ -30,43 +35,52 @@ export default function ChatPanel() {
   }
 
   return (
-    <section style={{ display: "flex", flexDirection: "column", height: 520 }}>
-      <h2>Ask your coach</h2>
-      <div style={{ flex: 1, overflowY: "auto", border: "1px solid #eee",
-                    borderRadius: 8, padding: 12, marginBottom: 8 }}>
+    <div className="card" style={{ position: "sticky", top: 16, display: "flex",
+         flexDirection: "column", height: "calc(100vh - 130px)", minHeight: 420 }}>
+      <h2 style={{ marginBottom: 10 }}>Ask your coach</h2>
+
+      <div style={{ flex: 1, overflowY: "auto", border: `1px solid ${colors.border}`,
+                    borderRadius: 8, padding: 12, marginBottom: 10, background: colors.card }}>
         {messages.length === 0 && (
-          <p style={{ color: "#999" }}>
-            Try: "Am I overtraining?" or "What should tomorrow's workout be?"
-          </p>
+          <div>
+            <p className="muted" style={{ marginTop: 0 }}>Try asking:</p>
+            {EXAMPLES.map((ex) => (
+              <button key={ex} className="btn" style={{ display: "block", width: "100%",
+                       textAlign: "left", marginBottom: 6, fontWeight: 500 }}
+                      onClick={() => send(ex)}>
+                {ex}
+              </button>
+            ))}
+          </div>
         )}
         {messages.map((m, i) => (
-          <div key={i} style={{ marginBottom: 12 }}>
-            <div style={{ fontWeight: 600, fontSize: 12, color: "#888" }}>
+          <div key={i} style={{ marginBottom: 14 }}>
+            <div style={{ fontWeight: 700, fontSize: 11, textTransform: "uppercase",
+                          letterSpacing: "0.03em",
+                          color: m.role === "user" ? colors.muted : colors.forest }}>
               {m.role === "user" ? "You" : "Coach"}
             </div>
-            <div style={{ whiteSpace: "pre-wrap" }}>{m.text}</div>
+            <div style={{ whiteSpace: "pre-wrap", fontSize: 14 }}>{m.text}</div>
             {m.tools && m.tools.length > 0 && (
-              <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>
-                used: {m.tools.join(", ")}
+              <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+                🔧 {m.tools.join(", ")}
               </div>
             )}
           </div>
         ))}
-        {loading && <div style={{ color: "#999" }}>Coach is thinking…</div>}
+        {loading && <div className="muted">Coach is thinking…</div>}
       </div>
+
       <div style={{ display: "flex", gap: 8 }}>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
           placeholder="Ask about your training…"
-          style={{ flex: 1, padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
+          style={{ flex: 1, padding: 9, borderRadius: 8, border: `1px solid ${colors.border}`, fontSize: 14 }}
         />
-        <button onClick={send} disabled={loading}
-                style={{ padding: "8px 16px", borderRadius: 6 }}>
-          Send
-        </button>
+        <button className="btn btn-primary" onClick={() => send()} disabled={loading}>Send</button>
       </div>
-    </section>
+    </div>
   );
 }
