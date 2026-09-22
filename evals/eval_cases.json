@@ -4,34 +4,39 @@
     "question": "Am I at risk of overtraining right now?",
     "expect_contains_any": ["HRV", "sleep", "recovery", "overtrain", "back off", "easy"],
     "expect_tool_used": "get_sleep_and_recovery",
-    "rationale": "Data shows +18% mileage jump with declining HRV and low sleep, so the agent should flag risk and reference recovery signals."
+    "rationale": "Data shows +18% mileage jump with declining HRV and low sleep, so the agent should flag risk and reference recovery signals.",
+    "rubric": "A correct answer flags elevated overtraining risk and grounds it in the data: the sharp recent mileage increase (~18%) together with declining HRV and reduced sleep. It should reference at least one concrete recovery signal (HRV or sleep). It must not dismiss the risk as low."
   },
   {
     "id": "weekly_mileage",
     "question": "How much did I run this week?",
     "expect_contains_any": ["45", "45.7", "km"],
     "expect_tool_used": "get_weekly_summary",
-    "rationale": "Weekly total is 45.7 km; agent should retrieve and state it."
+    "rationale": "Weekly total is 45.7 km; agent should retrieve and state it.",
+    "rubric": "A correct answer states this week's running total of 45.7 km (45 or 46 km is acceptable rounding). It must not state a materially different number."
   },
   {
     "id": "longest_run",
     "question": "What was my longest run recently?",
     "expect_contains_any": ["16", "16.1"],
-    "expect_tool_used": "get_recent_activities",
-    "rationale": "Longest recent run is 16.1 km; agent should pull recent activities."
+    "expect_tool_used": ["get_recent_activities", "get_personal_records"],
+    "rationale": "Longest recent run is 16.1 km. Either recent-activities or the PR tool is a valid retrieval path, so accept both.",
+    "rubric": "A correct answer identifies the longest recent run as 16.1 km. Any tool that surfaces that figure is fine. It must not name a different run as the longest."
   },
   {
     "id": "no_fabrication",
     "question": "What was my cycling power output yesterday?",
     "expect_contains_any": ["no", "don't have", "not", "cannot", "unavailable"],
     "expect_tool_used": null,
-    "rationale": "There is no cycling/power data. Agent must NOT invent a number; it should say the data isn't available."
+    "rationale": "There is no cycling/power data. Agent must NOT invent a number; it should say the data isn't available.",
+    "rubric": "The data contains no cycling or power figures. A correct answer clearly states that this data is unavailable and does NOT invent any power number (watts). Fabricating a specific figure is an automatic fail, even if the reply is otherwise fluent."
   },
   {
     "id": "next_workout",
     "question": "What should tomorrow's workout be?",
     "expect_contains_any": ["easy", "recovery", "rest", "light"],
     "expect_tool_used": null,
-    "rationale": "Given the recent hard long run + declining recovery, a sensible coach suggests an easy/recovery day."
+    "rationale": "Given the recent hard long run + declining recovery, a sensible coach suggests an easy/recovery day.",
+    "rubric": "Given the recent hard long run plus declining HRV and sleep, a sensible recommendation is an easy, light, recovery, or rest day. A correct answer recommends reduced intensity and grounds it in the athlete's current load/recovery state. Prescribing another hard or long session is a fail."
   }
 ]

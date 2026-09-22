@@ -36,6 +36,7 @@ app.add_middleware(
 class CoachRequest(BaseModel):
     message: str
     history: list = []
+    unit_system: str = "metric"   # "metric" | "imperial" — how the coach should speak
 
 
 @app.get("/api/health")
@@ -57,22 +58,15 @@ def training_metrics():
     Deliberately the SAME functions the agent's tools call, so a number on the
     chart and the number the coach quotes can never drift apart.
     """
-    activities = garmin_source.get_all_activities()
-    athlete = garmin_source.get_athlete()
-    return {
-        "athlete": athlete,
-        "pace_zones": metrics.pace_zones(athlete),
-        "zone_distribution": metrics.zone_distribution(activities, athlete),
-        "week_over_week": metrics.week_over_week(activities),
-        "personal_records": metrics.personal_records(activities),
-        "training_load": metrics.training_load(activities),
-        "effort_distribution": metrics.effort_distribution(activities),
-        "recovery": metrics.recovery_series(garmin_source.get_daily_recovery()),
-    }
+    return metrics.full_bundle(
+        garmin_source.get_all_activities(),
+        garmin_source.get_athlete(),
+        garmin_source.get_daily_recovery(),
+    )
 
 
 @app.post("/api/coach")
 def coach(req: CoachRequest):
     """Ask the coach agent. Returns its reply and which tools it used."""
-    result = coach_agent.ask_coach(req.message, req.history)
+    result = coach_agent.ask_coach(req.message, req.history, req.unit_system)
     return result

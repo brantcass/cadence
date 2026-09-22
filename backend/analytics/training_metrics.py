@@ -368,6 +368,27 @@ def effort_distribution(activities, days=28):
 
 # ---- recovery series ----
 
+def full_bundle(activities, athlete, daily_recovery):
+    """Every derived metric in one dict.
+
+    This is the single definition of "all the computed numbers", shared by the
+    /api/metrics endpoint (feeds the dashboard) and the eval judge (which needs
+    these as ground truth — the coach's numbers come from tools that compute
+    exactly these, so a judge without them mistakes correct analysis for
+    hallucination).
+    """
+    return {
+        "athlete": athlete,
+        "pace_zones": pace_zones(athlete),
+        "zone_distribution": zone_distribution(activities, athlete),
+        "week_over_week": week_over_week(activities),
+        "personal_records": personal_records(activities),
+        "training_load": training_load(activities),
+        "effort_distribution": effort_distribution(activities),
+        "recovery": recovery_series(daily_recovery),
+    }
+
+
 def recovery_series(daily_recovery, days=28):
     """Trimmed sleep/HRV series plus a simple direction-of-travel readout."""
     end = latest_date(daily_recovery)

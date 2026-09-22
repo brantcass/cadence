@@ -18,6 +18,7 @@ that's what drives the model to pick the right retrieval path.
 """
 
 from analytics import training_metrics as metrics
+from analytics import units
 from data import garmin_source
 
 # ---- Schemas the model sees (Anthropic tool-use format) ----
@@ -166,14 +167,47 @@ TOOL_FUNCTIONS = {
 }
 
 
-def run_tool(name: str, tool_input: dict):
-    """Dispatch a tool call by name. Returns the tool's result."""
+def _enrich_activities(activities, system):
+    """Add unit-converted display strings to each activity.
+
+    The coach must quote distances/paces in the athlete's units WITHOUT doing the
+    conversion itself (model arithmetic is the thing this app avoids). So we do it
+    here, in Python, and hand the coach ready-made strings. Copy each dict first —
+    the source list may be the cached live payload, and we must not mutate it.
+    """
+    out = []
+    for a in activities:
+        a = dict(a)
+        if a.get("distance_km"):
+            a["distance_display"] = units.format_distance(a["distance_km"], system)
+            pace = metrics.pace_min_per_km(a)
+            if pace is not None:
+                a["pace_display"] = units.format_pace(pace, system)
+        out.append(a)
+    return out
+
+
+def enrich_display(name, result, system):
+    """Attach `*_display` fields (in the athlete's units) to results that carry
+    distances or paces. Central place to add more tools as we go."""
+    if name == "get_recent_activities" and isinstance(result, list):
+        return _enrich_activities(result, system)
+    return result
+
+
+def run_tool(name: str, tool_input: dict, unit_system: str = units.METRIC):
+    """Dispatch a tool call by name. Returns the tool's result.
+
+    `unit_system` ('metric' | 'imperial') controls the display strings added to
+    the result so the coach can quote the athlete's preferred units directly.
+    """
     if name not in TOOL_FUNCTIONS:
         return {"error": f"Unknown tool: {name}"}
     try:
-        return TOOL_FUNCTIONS[name](**(tool_input or {}))
+        result = TOOL_FUNCTIONS[name](**(tool_input or {}))
     except TypeError as e:
         # The model passed an argument the tool doesn't accept. Hand the error
         # back as a normal result so the agent can correct itself rather than
         # crashing the whole request.
         return {"error": f"Bad arguments for {name}: {e}"}
+    return enrich_display(name, result, unit_system)

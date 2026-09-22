@@ -26,25 +26,45 @@ Your job:
 Be direct and practical. Cite the specific numbers you looked up. Do not invent
 data. If a tool gives you nothing, say so rather than making something up."""
 
+# Appended to the system prompt per request, so the coach speaks the athlete's
+# units. Conversion already happened in Python (tool results carry `*_display`
+# strings); the coach must NOT convert numbers itself.
+_UNIT_GUIDANCE = {
+    "imperial": "\n\nThe athlete uses IMPERIAL units (miles, pounds). Tool "
+                "results include pre-converted `*_display` fields "
+                "(e.g. distance_display, pace_display). When you state a "
+                "distance, pace, or weight, quote those display strings "
+                "verbatim. Never convert numbers yourself.",
+    "metric": "\n\nThe athlete uses METRIC units (kilometres, kilograms). Use "
+              "the metric values in the tool results.",
+}
+
+
+def _system_prompt(unit_system: str) -> str:
+    return SYSTEM_PROMPT + _UNIT_GUIDANCE.get(unit_system, _UNIT_GUIDANCE["metric"])
+
+
 MAX_TURNS = 6  # safety cap so a misbehaving loop can't run forever
 
 
-def ask_coach(user_message: str, history=None):
+def ask_coach(user_message: str, history=None, unit_system: str = "metric"):
     """Run one coach interaction, resolving any tool calls along the way.
 
     Returns a dict: {"reply": str, "tool_calls": [names...]}.
     `history` is an optional list of prior {role, content} messages.
+    `unit_system` ('metric' | 'imperial') controls the units the coach speaks in.
     """
     messages = list(history or [])
     messages.append({"role": "user", "content": user_message})
 
+    system_prompt = _system_prompt(unit_system)
     tool_calls_made = []
 
     for _ in range(MAX_TURNS):
         response = llm_provider.chat(
             messages=messages,
             tools=tools.TOOL_SCHEMAS,
-            system=SYSTEM_PROMPT,
+            system=system_prompt,
             max_tokens=1024,
         )
 
@@ -63,7 +83,7 @@ def ask_coach(user_message: str, history=None):
         for block in response.content:
             if block.type == "tool_use":
                 tool_calls_made.append(block.name)
-                result = tools.run_tool(block.name, block.input)
+                result = tools.run_tool(block.name, block.input, unit_system)
                 tool_results.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,
