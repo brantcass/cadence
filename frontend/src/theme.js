@@ -28,8 +28,8 @@ export const colors = {
   // effort mix — ordinal ramp, Easy -> Moderate -> Hard (light -> dark)
   effort: ["#86b6ef", "#3987e5", "#184f95"],
 
-  // training phases — validated categorical set
-  phase: { Base: "#159b70", Build: "#2f6fb0", Peak: "#c05a2a", Taper: "#8a5fb0" },
+  // training phases — validated categorical set (+ olive On-ramp lead-in)
+  phase: { "On-ramp": "#5a7d55", Base: "#159b70", Build: "#2f6fb0", Peak: "#c05a2a", Taper: "#8a5fb0" },
 
   // acute:chronic load status — reserved status colors (shown with the status word)
   status: {

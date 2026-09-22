@@ -42,9 +42,22 @@ def test_week_count_and_dates():
 def test_phases_ordered():
     p = _plan()
     phases = [ph["phase"] for ph in p["phases"]]
-    assert phases == ["Base", "Build", "Peak", "Taper"], phases
-    # Taper is the last thing before the race, and Peak precedes it.
+    # Phases appear in canonical order (On-ramp only when the base is low).
+    canon = ["On-ramp", "Base", "Build", "Peak", "Taper"]
+    idxs = [canon.index(x) for x in phases]
+    assert idxs == sorted(idxs), phases
+    assert phases[-1] == "Taper"
     assert p["weeks"][-1]["phase"] == "Taper"
+
+
+def test_onramp_is_easy_only():
+    # The test athlete has a low base, so the plan should prepend On-ramp weeks
+    # that contain no hard (quality) running.
+    p = _plan()
+    onramp = [w for w in p["weeks"] if w["phase"] == "On-ramp"]
+    assert onramp, "expected On-ramp weeks for a low-base athlete"
+    for w in onramp:
+        assert all(s["intensity"] != "quality" for s in w["sessions"]), w["week_of"]
 
 
 def test_long_run_peaks_then_tapers():

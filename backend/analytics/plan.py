@@ -98,33 +98,53 @@ def pace_label(kind: str, threshold: float) -> str:
 
 # ---- phase layout ----
 
-def _phase_for_week(index: int, total: int) -> str:
+def _onramp_weeks(current_weekly_km: float, total: int) -> int:
+    """How many gentle lead-in weeks to prepend, based on how low the base is.
+
+    A marathon plan assumes you can already run a handful of easy miles a week.
+    When the athlete is starting well below that, jumping straight into the Base
+    load is how you get hurt — so we prepend easy-only weeks that ease volume up
+    from where they actually are. Nothing when the base is already there.
+    """
+    if current_weekly_km < 25:
+        n = 5
+    elif current_weekly_km < 40:
+        n = 3
+    else:
+        n = 0
+    return max(0, min(n, total - 8))   # always leave >= 8 weeks for Base..Taper
+
+
+def _phase_for_week(index: int, total: int, onramp: int = 0) -> str:
     """Assign a phase to week `index` (1-based) of a `total`-week plan.
 
-    Taper and Peak are fixed-length at the end; the rest splits ~45/55 into Base
-    then Build. Short plans degrade gracefully (Peak/Taper shrink first).
+    Optional On-ramp weeks come first; Taper and Peak are fixed-length at the end;
+    what's left splits ~45/55 into Base then Build. Short plans degrade gracefully.
     """
-    taper = min(TAPER_WEEKS, max(1, total // 6))
-    peak = min(PEAK_WEEKS, max(1, (total - taper) // 5))
-    remaining = total - taper - peak
+    if index <= onramp:
+        return "On-ramp"
+    rest_total = total - onramp
+    ri = index - onramp
+    taper = min(TAPER_WEEKS, max(1, rest_total // 6))
+    peak = min(PEAK_WEEKS, max(1, (rest_total - taper) // 5))
+    remaining = rest_total - taper - peak
     base = round(remaining * 0.45)
-    build = remaining - base
 
-    if index > total - taper:
+    if ri > rest_total - taper:
         return "Taper"
-    if index > total - taper - peak:
+    if ri > rest_total - taper - peak:
         return "Peak"
-    if index <= base:
+    if ri <= base:
         return "Base"
     return "Build"
 
 
-def _phase_bounds(total: int):
+def _phase_bounds(total: int, onramp: int = 0):
     """Ordered [(phase, week_count)] for the overview."""
     counts = {}
     order = []
     for i in range(1, total + 1):
-        p = _phase_for_week(i, total)
+        p = _phase_for_week(i, total, onramp)
         if p not in counts:
             order.append(p)
         counts[p] = counts.get(p, 0) + 1
@@ -207,7 +227,7 @@ def _quality_workout(phase: str, index: int, threshold: float, system: str):
 def _strength_load(phase: str) -> str:
     """How hard the strength days go, given the running phase."""
     return {
-        "Base": "heavy", "Build": "heavy",
+        "On-ramp": "build", "Base": "heavy", "Build": "heavy",
         "Peak": "maintain", "Taper": "light",
     }[phase]
 
@@ -255,8 +275,16 @@ def _week_sessions(week_start: date, phase: str, index: int, total: int,
             sessions.append(_run(name, d, "Long run", detail, long_km,
                                  pace_for("long", threshold), "long"))
         elif dow == quality_day:
-            sessions.append(_run(name, d, q_title, q_detail, q_km,
-                                 pace_for("tempo", threshold), "quality"))
+            if phase == "On-ramp":
+                # No hard work yet — just a second easy run with strides to build
+                # volume and turnover without stress.
+                km = round(min(max(long_km * 0.6, 3.0), 8.0), 1)
+                sessions.append(_run(name, d, "Easy + strides",
+                                     f"{_d(km, system)} easy + 6 × 20 s strides. Build the habit and the volume.",
+                                     km, pace_for("easy", threshold), "easy"))
+            else:
+                sessions.append(_run(name, d, q_title, q_detail, q_km,
+                                     pace_for("tempo", threshold), "quality"))
         elif dow == easy_day:
             sessions.append(_run(name, d, "Easy run",
                                  f"{_d(easy_km, system)} easy @ {_pk('easy', threshold, system)} (Z2, conversational).",
@@ -357,12 +385,13 @@ def build_plan(start_date: date, race_date: date, athlete: dict, activities: lis
     # the ramp toward the preset peak does the building.
     start_long = min(max(round(fitness["recent_longest_run_km"], 1), 6.0), 20.0)
     peak_long = preset["peak_long_km"]
+    onramp = _onramp_weeks(fitness["current_weekly_km"], total_weeks)
 
     weeks = []
     for i in range(1, total_weeks + 1):
-        phase = _phase_for_week(i, total_weeks)
+        phase = _phase_for_week(i, total_weeks, onramp)
         week_start = first_monday + timedelta(weeks=i - 1)
-        # Cutback only inside Base/Build, and never the last week of Build.
+        # Cutback only inside Base/Build, and never during the On-ramp.
         is_cutback = phase in ("Base", "Build") and i % CUTBACK_EVERY == 0
         long_km = _long_run_km(i, total_weeks, phase, start_long, peak_long, is_cutback)
         sessions = _week_sessions(week_start, phase, i, total_weeks, long_km,
@@ -404,7 +433,7 @@ def build_plan(start_date: date, race_date: date, athlete: dict, activities: lis
         "paces": {kind: {"min_per_km": pace_for(kind, threshold),
                          "label": f"{_mmss(pace_for(kind, threshold))}/km"}
                   for kind in PACE_MULT},
-        "phases": [{"phase": p, "weeks": n} for p, n in _phase_bounds(total_weeks)],
+        "phases": [{"phase": p, "weeks": n} for p, n in _phase_bounds(total_weeks, onramp)],
         "weeks": weeks,
     }
 
@@ -413,6 +442,7 @@ def _phase_focus(phase: str, is_cutback: bool) -> str:
     if is_cutback:
         return "Cutback week — volume steps down so your body absorbs the work."
     return {
+        "On-ramp": "On-ramp — ease in from your current volume with easy running only.",
         "Base": "Aerobic base — easy volume, light speed, build the engine.",
         "Build": "Build — threshold and marathon-pace work, long run grows.",
         "Peak": "Peak — biggest long runs and race-specific pace at highest load.",
