@@ -1,32 +1,46 @@
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line,
 } from "recharts";
+import { useUnits } from "../UnitContext.jsx";
+import { formatDistance, kmToMi, IMPERIAL } from "../units.js";
 
 // Dashboard: shows the athlete's recent training. Intentionally simple —
 // build this out in Claude Code (add HRV, effort, weekly trend, etc.).
 export default function Dashboard({ data }) {
+  const { system } = useUnits();
   if (!data) return <div>Loading training data…</div>;
 
-  const runs = (data.activities || []).filter((a) => a.type === "run");
+  const imperial = system === IMPERIAL;
+  const distUnit = imperial ? "mi" : "km";
+
+  // Store canonical km; add a converted `distance` field only for the chart's
+  // axis/bars. We never mutate the source — map into fresh objects.
+  const runs = (data.activities || [])
+    .filter((a) => a.type === "run")
+    .map((a) => ({
+      ...a,
+      distance: imperial ? +kmToMi(a.distance_km).toFixed(2) : a.distance_km,
+    }));
 
   return (
     <section>
       <h2>This Week</h2>
       {data.weekly_summary && (
         <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-          <Stat label="Total km" value={data.weekly_summary.total_km} />
+          <Stat label={`Total ${distUnit}`}
+                value={formatDistance(data.weekly_summary.total_km, system)} />
           <Stat label="Sessions" value={data.weekly_summary.total_sessions} />
           <Stat label="vs last wk" value={data.weekly_summary.trend_vs_last_week_km} />
         </div>
       )}
 
-      <h3>Distance by run</h3>
+      <h3>Distance by run ({distUnit})</h3>
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={runs}>
           <XAxis dataKey="date" tick={{ fontSize: 11 }} />
           <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip />
-          <Bar dataKey="distance_km" />
+          <Tooltip formatter={(v) => `${v} ${distUnit}`} />
+          <Bar dataKey="distance" />
         </BarChart>
       </ResponsiveContainer>
 

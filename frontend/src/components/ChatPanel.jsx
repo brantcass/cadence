@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { askCoach } from "../api.js";
+import { useUnits } from "../UnitContext.jsx";
 
 // Chat panel: talk to the coach agent. Shows which tools it used, so you can
 // literally see the agent retrieving data — a nice thing to demo.
 export default function ChatPanel() {
+  const { system } = useUnits();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,7 @@ export default function ChatPanel() {
     setMessages((m) => [...m, { role: "user", text: q }]);
     setLoading(true);
     try {
-      const res = await askCoach(q);
+      const res = await askCoach(q, [], system);
       setMessages((m) => [
         ...m,
         { role: "coach", text: res.reply, tools: res.tool_calls },
