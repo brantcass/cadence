@@ -22,8 +22,11 @@ def load_config() -> dict:
     return json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
 
 
-def build_current_plan() -> dict:
-    """The full plan, grounded in the athlete's current data and today's date."""
+def build_current_plan(system: str = "imperial") -> dict:
+    """The full plan, grounded in the athlete's current data and today's date.
+
+    `system` controls the units the workout prose is written in.
+    """
     cfg = load_config()
     start = date.fromisoformat(cfg["start_date"]) if cfg.get("start_date") else date.today()
     race = date.fromisoformat(cfg["race_date"])
@@ -34,13 +37,14 @@ def build_current_plan() -> dict:
         activities=garmin_source.get_all_activities(),
         race_type=cfg.get("race_type", "marathon"),
         options=cfg.get("schedule", {}),
+        system=system,
     )
 
 
-def plan_overview() -> dict:
+def plan_overview(system: str = "imperial") -> dict:
     """The plan without the full week-by-week session detail — the summary a
     coach quotes when asked 'what does my plan look like?'."""
-    p = build_current_plan()
+    p = build_current_plan(system)
     return {
         "race": p["race"],
         "start_date": p["start_date"],
@@ -56,9 +60,9 @@ def plan_overview() -> dict:
     }
 
 
-def upcoming(count: int = 2, as_of: date = None) -> dict:
+def upcoming(count: int = 2, as_of: date = None, system: str = "imperial") -> dict:
     """The next `count` weeks of detailed sessions from `as_of` (default today)."""
-    p = build_current_plan()
+    p = build_current_plan(system)
     as_of = as_of or date.today()
     weeks = plan.upcoming_weeks(p, as_of, count=count)
     return {"race": p["race"], "as_of": as_of.isoformat(),

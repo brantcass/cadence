@@ -13,8 +13,9 @@ export async function fetchMetrics() {
   return res.json();
 }
 
-export async function fetchPlan() {
-  const res = await fetch(`${BASE}/api/plan`);
+export async function fetchPlan(unitSystem = "imperial") {
+  // units controls the language the workout prose is written in (miles vs km).
+  const res = await fetch(`${BASE}/api/plan?units=${unitSystem}`);
   if (!res.ok) throw new Error(`plan failed: ${res.status}`);
   return res.json();
 }

@@ -17,6 +17,8 @@ Tool descriptions say *when* to reach for each one, not just what it returns —
 that's what drives the model to pick the right retrieval path.
 """
 
+import inspect
+
 from analytics import training_metrics as metrics
 from analytics import units
 from data import garmin_source
@@ -196,12 +198,12 @@ def _get_training_load():
     return metrics.training_load(garmin_source.get_all_activities())
 
 
-def _get_plan_overview():
-    return plan_service.plan_overview()
+def _get_plan_overview(unit_system: str = units.METRIC):
+    return plan_service.plan_overview(system=unit_system)
 
 
-def _get_training_plan(weeks_ahead: int = 2):
-    return plan_service.upcoming(count=weeks_ahead)
+def _get_training_plan(weeks_ahead: int = 2, unit_system: str = units.METRIC):
+    return plan_service.upcoming(count=weeks_ahead, system=unit_system)
 
 
 def _get_strength_workout():
@@ -309,8 +311,14 @@ def run_tool(name: str, tool_input: dict, unit_system: str = units.METRIC):
     """
     if name not in TOOL_FUNCTIONS:
         return {"error": f"Unknown tool: {name}"}
+    fn = TOOL_FUNCTIONS[name]
+    call_kwargs = dict(tool_input or {})
+    # Inject the unit system for tools that write unit-aware prose (the model
+    # never passes it — it isn't in their schemas).
+    if "unit_system" in inspect.signature(fn).parameters:
+        call_kwargs["unit_system"] = unit_system
     try:
-        result = TOOL_FUNCTIONS[name](**(tool_input or {}))
+        result = fn(**call_kwargs)
     except TypeError as e:
         # The model passed an argument the tool doesn't accept. Hand the error
         # back as a normal result so the agent can correct itself rather than

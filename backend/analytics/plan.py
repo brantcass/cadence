@@ -27,6 +27,8 @@ Design choices worth knowing:
 
 from datetime import date, timedelta
 
+from analytics import units
+
 # Race presets: canonical distance + a sensible peak long run for that goal.
 RACE_PRESETS = {
     "marathon":  {"name": "Marathon",       "distance_km": 42.195, "peak_long_km": 32.0},
@@ -75,6 +77,18 @@ def _mmss(min_per_km: float) -> str:
 def pace_for(kind: str, threshold: float) -> float:
     """Canonical min/km for a workout kind, from the athlete's threshold pace."""
     return round(threshold * PACE_MULT[kind], 2)
+
+
+# Workout prose is written in the athlete's units. Distances go through the units
+# module; interval reps are TIME-based so we never print odd conversions like
+# "0.9 mi repeats". `_d` formats a canonical-km distance, `_pk` a canonical pace.
+def _d(km: float, system: str) -> str:
+    return units.format_distance(km, system)
+
+
+def _pk(kind_or_pace, threshold: float, system: str) -> str:
+    pace = kind_or_pace if isinstance(kind_or_pace, (int, float)) else pace_for(kind_or_pace, threshold)
+    return units.format_pace(pace, system)
 
 
 def pace_label(kind: str, threshold: float) -> str:
@@ -149,37 +163,39 @@ def _long_run_km(index: int, total: int, phase: str, start_long: float,
 
 # ---- quality workout selection ----
 
-def _quality_workout(phase: str, index: int, threshold: float, race_name: str):
+def _quality_workout(phase: str, index: int, threshold: float, system: str):
     """Pick the week's quality session (title + detail + distance) by phase.
 
     A small rotation keeps stimulus varied without randomness (deterministic on
-    the week index, so the plan is reproducible).
+    the week index, so the plan is reproducible). Reps are time-based so the
+    prose reads cleanly in either unit system.
     """
-    mp = pace_label("marathon", threshold)
-    tempo = pace_label("tempo", threshold)
-    thr = pace_label("threshold", threshold)
-    ival = pace_label("interval", threshold)
+    mp = _pk("marathon", threshold, system)
+    tempo = _pk("tempo", threshold, system)
+    thr = _pk("threshold", threshold, system)
+    ival = _pk("interval", threshold, system)
+    d = lambda km: _d(km, system)
 
     if phase == "Base":
         rotation = [
-            ("Strides + easy", f"8 km easy, finish with 6 × 20 s strides (relaxed, fast). Builds leg speed without load.", 8.0),
-            ("Short tempo", f"2 km easy + 3 × 5 min @ tempo ({tempo}) w/ 90 s jog + 2 km easy.", 10.0),
+            ("Strides + easy", f"{d(8)} easy, finish with 6 × 20 s strides (relaxed, fast). Builds leg speed without load.", 8.0),
+            ("Short tempo", f"{d(2)} easy + 3 × 5 min @ tempo ({tempo}) w/ 90 s jog + {d(2)} easy.", 10.0),
         ]
     elif phase == "Build":
         rotation = [
-            ("Threshold intervals", f"2 km w-up + 4 × 1.5 km @ threshold ({thr}) w/ 90 s jog + 2 km c-down.", 13.0),
-            ("Marathon-pace run", f"3 km easy + 8 km @ marathon pace ({mp}) + 2 km easy.", 13.0),
-            ("Tempo", f"2 km w-up + 6 km @ tempo ({tempo}) + 2 km c-down.", 12.0),
+            ("Threshold intervals", f"{d(2)} w-up + 4 × 5 min @ threshold ({thr}) w/ 90 s jog + {d(2)} c-down.", 13.0),
+            ("Marathon-pace run", f"{d(3)} easy + {d(8)} @ marathon pace ({mp}) + {d(2)} easy.", 13.0),
+            ("Tempo", f"{d(2)} w-up + {d(6)} @ tempo ({tempo}) + {d(2)} c-down.", 12.0),
         ]
     elif phase == "Peak":
         rotation = [
-            ("Long MP segments", f"3 km easy + 3 × 3 km @ marathon pace ({mp}) w/ 1 km float + 2 km easy.", 15.0),
-            ("Threshold", f"2 km w-up + 5 × 1.6 km @ threshold ({thr}) w/ 2 min jog + 2 km c-down.", 15.0),
+            ("Long MP segments", f"{d(3)} easy + 3 × 8 min @ marathon pace ({mp}) w/ 2 min float + {d(2)} easy.", 15.0),
+            ("Threshold", f"{d(2)} w-up + 5 × 5 min @ threshold ({thr}) w/ 2 min jog + {d(2)} c-down.", 15.0),
         ]
     else:  # Taper
         rotation = [
-            ("Race-pace sharpener", f"2 km easy + 4 km @ marathon pace ({mp}) + 1 km easy. Legs sharp, not tired.", 8.0),
-            ("Short VO2 touch", f"2 km w-up + 5 × 2 min @ interval ({ival}) w/ 2 min jog + 2 km c-down.", 8.0),
+            ("Race-pace sharpener", f"{d(2)} easy + {d(4)} @ marathon pace ({mp}) + {d(1)} easy. Legs sharp, not tired.", 8.0),
+            ("Short VO2 touch", f"{d(2)} w-up + 5 × 2 min @ interval ({ival}) w/ 2 min jog + {d(2)} c-down.", 8.0),
         ]
 
     title, detail, dist = rotation[(index - 1) % len(rotation)]
@@ -202,7 +218,7 @@ _DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 def _week_sessions(week_start: date, phase: str, index: int, total: int,
-                   long_km: float, threshold: float, race_name: str,
+                   long_km: float, threshold: float, system: str,
                    options: dict) -> list:
     """Build the 7-day schedule for a week.
 
@@ -217,8 +233,11 @@ def _week_sessions(week_start: date, phase: str, index: int, total: int,
     strength_b_day = options.get("strength_b_day", 4)  # Friday
     climb_day = options.get("climb_day", 3)            # Thursday
 
-    easy_km = 8.0 if phase != "Taper" else 6.0
-    q_title, q_detail, q_km = _quality_workout(phase, index, threshold, race_name)
+    # Easy run scales with the long run so the week stays proportional to the
+    # athlete's base — a fixed 8 km easy run is too much when the long run is
+    # only 8 km, and too little at peak.
+    easy_km = round(min(max(long_km * 0.55, 4.0), 12.0), 1)
+    q_title, q_detail, q_km = _quality_workout(phase, index, threshold, system)
     strength_load = _strength_load(phase)
 
     sessions = []
@@ -227,12 +246,12 @@ def _week_sessions(week_start: date, phase: str, index: int, total: int,
         name = _DAY_NAMES[dow]
 
         if dow == long_day:
-            marathon_pace = pace_label("marathon", threshold)
-            detail = f"{long_km:g} km easy @ {pace_label('long', threshold)}."
+            detail = f"{_d(long_km, system)} easy @ {_pk('long', threshold, system)}."
             # In Build/Peak, finish some long runs at marathon effort.
             if phase in ("Build", "Peak") and index % 2 == 0:
-                detail = (f"{long_km:g} km: mostly easy, last "
-                          f"{min(8, round(long_km * 0.3)):g} km @ marathon pace ({marathon_pace}).")
+                mp_km = min(8, round(long_km * 0.3))
+                detail = (f"{_d(long_km, system)}: mostly easy, last "
+                          f"{_d(mp_km, system)} @ marathon pace ({_pk('marathon', threshold, system)}).")
             sessions.append(_run(name, d, "Long run", detail, long_km,
                                  pace_for("long", threshold), "long"))
         elif dow == quality_day:
@@ -240,7 +259,7 @@ def _week_sessions(week_start: date, phase: str, index: int, total: int,
                                  pace_for("tempo", threshold), "quality"))
         elif dow == easy_day:
             sessions.append(_run(name, d, "Easy run",
-                                 f"{easy_km:g} km easy @ {pace_label('easy', threshold)} (Z2, conversational).",
+                                 f"{_d(easy_km, system)} easy @ {_pk('easy', threshold, system)} (Z2, conversational).",
                                  easy_km, pace_for("easy", threshold), "easy"))
         elif dow == strength_a_day:
             sessions.append(_strength(name, d, "Strength A — legs + push", strength_load))
@@ -284,11 +303,11 @@ def _rest(day, d):
             "title": "Rest", "detail": "Full rest or light mobility.", "intensity": "rest"}
 
 
-def _race_day(day, d, preset):
+def _race_day(day, d, preset, system):
     return {
         "day": day, "date": d.isoformat(), "kind": "race",
         "title": f"🏁 RACE DAY — {preset['name']}",
-        "detail": f"{preset['distance_km']:g} km. Trust the taper. Even pacing, fuel early.",
+        "detail": f"{_d(preset['distance_km'], system)}. Trust the taper. Even pacing, fuel early.",
         "distance_km": round(preset["distance_km"], 1),
         "intensity": "race",
     }
@@ -313,12 +332,15 @@ def current_fitness(activities) -> dict:
 # ---- the public entry point ----
 
 def build_plan(start_date: date, race_date: date, athlete: dict, activities: list,
-               race_type: str = "marathon", options: dict = None) -> dict:
+               race_type: str = "marathon", options: dict = None,
+               system: str = units.IMPERIAL) -> dict:
     """Build the full periodized plan from `start_date` through race week.
 
     `athlete` supplies `threshold_pace_min_per_km` (measured or estimated).
     `activities` grounds the starting long run in what they've recently run.
     `options` overrides scheduling (long_run_day, quality_day, ...).
+    `system` ('metric'|'imperial') is the unit the workout PROSE is written in;
+    numeric fields (distance_km, target_pace_min_per_km) stay canonical metric.
     """
     options = options or {}
     preset = RACE_PRESETS.get(race_type, RACE_PRESETS["marathon"])
@@ -329,9 +351,11 @@ def build_plan(start_date: date, race_date: date, athlete: dict, activities: lis
     total_weeks = max(1, (race_monday - first_monday).days // 7 + 1)
 
     fitness = current_fitness(activities)
-    # Start the long run near their recent longest (clamped to a sane range) and
-    # climb toward the preset peak.
-    start_long = min(max(fitness["recent_longest_run_km"], 12.0), 20.0)
+    # Start the long run at their recent longest so week 1 is something they can
+    # already do — clamped to a sane range. The floor is deliberately low (~6 km)
+    # so a beginner-ish base isn't forced into a long run they're not ready for;
+    # the ramp toward the preset peak does the building.
+    start_long = min(max(round(fitness["recent_longest_run_km"], 1), 6.0), 20.0)
     peak_long = preset["peak_long_km"]
 
     weeks = []
@@ -342,12 +366,12 @@ def build_plan(start_date: date, race_date: date, athlete: dict, activities: lis
         is_cutback = phase in ("Base", "Build") and i % CUTBACK_EVERY == 0
         long_km = _long_run_km(i, total_weeks, phase, start_long, peak_long, is_cutback)
         sessions = _week_sessions(week_start, phase, i, total_weeks, long_km,
-                                  threshold, preset["name"], options)
+                                  threshold, system, options)
         # Mark the actual race day (it usually lands in the final week, on a day
         # the template would otherwise call easy/rest).
         for j, s in enumerate(sessions):
             if s["date"] == race_date.isoformat():
-                sessions[j] = _race_day(s["day"], race_date, preset)
+                sessions[j] = _race_day(s["day"], race_date, preset, system)
         run_km = round(sum(s.get("distance_km", 0) for s in sessions), 1)
         weeks.append({
             "index": i,

@@ -12,9 +12,11 @@ export default function Plan() {
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(() => new Set());
 
+  // Refetch when units change — the workout prose is rendered server-side in the
+  // chosen unit (the numeric fields the pills use stay canonical either way).
   useEffect(() => {
-    fetchPlan().then(setPlan).catch((e) => setError(e.message));
-  }, []);
+    fetchPlan(system).then(setPlan).catch((e) => setError(e.message));
+  }, [system]);
 
   const todayISO = new Date().toISOString().slice(0, 10);
   const currentIndex = useMemo(() => {
@@ -52,7 +54,7 @@ export default function Plan() {
         <PhaseTimeline phases={plan.phases} />
 
         <div className="stat-row" style={{ marginTop: 14 }}>
-          <Mini v={`${snap.threshold_pace}`} l={`Threshold pace${snap.threshold_pace_estimated ? " (est.)" : ""}`} />
+          <Mini v={formatPace(snap.threshold_pace_min_per_km, system)} l={`Threshold pace${snap.threshold_pace_estimated ? " (est.)" : ""}`} />
           <Mini v={formatDistance(snap.current_weekly_km, system)} l="Current weekly volume" />
           <Mini v={formatDistance(snap.peak_long_run_km, system)} l="Peak long run" />
         </div>

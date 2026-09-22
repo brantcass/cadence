@@ -79,15 +79,18 @@ def training_metrics():
 
 
 @app.get("/api/plan")
-def training_plan():
-    """The full periodized plan (all weeks + day-by-day sessions) for the plan view."""
-    return plan_service.build_current_plan()
+def training_plan(units: str = "imperial"):
+    """The full periodized plan (all weeks + day-by-day sessions) for the plan view.
+
+    `units` sets the unit system the workout prose is written in.
+    """
+    return plan_service.build_current_plan(system=units)
 
 
 @app.get("/api/plan/overview")
-def plan_overview():
+def plan_overview(units: str = "imperial"):
     """Plan summary without per-day detail (phases + one line per week)."""
-    return plan_service.plan_overview()
+    return plan_service.plan_overview(system=units)
 
 
 @app.get("/api/strength")
